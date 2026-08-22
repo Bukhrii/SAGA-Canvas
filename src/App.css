@@ -1,0 +1,201 @@
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Shell ──────────────────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100dvw;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: 52px;
+  min-height: 52px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  z-index: 200;
+  /* NO overflow:hidden — floating dropdowns (portaled to body) must not be affected */
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.brand-icon    { font-size: 18px; color: var(--accent-gold); }
+.brand-name    { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+.brand-tagline {
+  font-size: 10px; color: var(--text-muted); letter-spacing: 0.07em;
+  text-transform: uppercase; border-left: 1px solid var(--border-subtle);
+  padding-left: 8px; white-space: nowrap;
+}
+
+/* Mobile panel toggle buttons */
+.mobile-panel-btns { display: none; gap: 6px; flex-shrink: 0; }
+.mpb {
+  padding: 5px 10px;
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  color: var(--text-secondary); border-radius: var(--radius-sm);
+  font-size: 12px; font-family: var(--font-body); cursor: pointer;
+}
+.mpb--active { background: var(--bg-card); border-color: var(--accent-gold); color: var(--accent-gold); }
+
+/* ── Body ───────────────────────────────────────────────────────────────── */
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Resizable panels ───────────────────────────────────────────────────── */
+.panel-sidebar,
+.panel-props {
+  position: relative;
+  flex-shrink: 0;
+  background: var(--bg-panel);
+  /* overflow:hidden clips the inner content to the panel width */
+  overflow: hidden;
+  transition: width 0.15s ease;
+  min-width: 0;
+  /* ensure children that say width:100% get full panel width */
+  display: flex;
+  flex-direction: column;
+}
+.panel-sidebar { border-right: 1px solid var(--border-subtle); }
+.panel-props   { border-left:  1px solid var(--border-subtle); }
+.panel--collapsed { border: none !important; overflow: hidden; }
+
+/* Direct children (Sidebar, PropertiesPanel) fill the panel */
+.panel-sidebar > *,
+.panel-props   > * {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+/* But resize handle should NOT expand */
+.panel-sidebar > .resize-handle,
+.panel-props   > .resize-handle {
+  flex: none;
+  width: 8px;
+}
+
+/* ── Resize handles ─────────────────────────────────────────────────────── */
+.resize-handle {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 8px;
+  z-index: 50;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  flex-shrink: 0;
+}
+.resize-handle--right { right: -4px; }
+.resize-handle--left  { left:  -4px; }
+
+.resize-handle__inner {
+  width: 3px; height: 36px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  transition: background 0.15s, height 0.15s;
+  pointer-events: none;
+}
+.resize-handle:hover .resize-handle__inner,
+.resize-handle:active .resize-handle__inner {
+  background: var(--accent-gold);
+  height: 56px;
+}
+
+/* ── Canvas area ────────────────────────────────────────────────────────── */
+.canvas-area {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  background: repeating-conic-gradient(#1c1208 0% 25%, #181008 0% 50%) 0 0 / 20px 20px;
+}
+
+/* ── Mobile bottom sheet ────────────────────────────────────────────────── */
+.mobile-sheet {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+}
+.mobile-sheet__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.55);
+}
+.mobile-sheet__panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  max-height: 78dvh;
+  background: var(--bg-panel);
+  border-radius: 16px 16px 0 0;
+  border-top: 1px solid var(--border-mid);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.22s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.mobile-sheet__bar {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 16px 6px; flex-shrink: 0; position: relative;
+}
+.mobile-sheet__pill { width: 36px; height: 4px; background: var(--border-mid); border-radius: 2px; }
+.mobile-sheet__close {
+  position: absolute; right: 14px; top: 8px;
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  color: var(--text-secondary); border-radius: 50%;
+  width: 26px; height: 26px; font-size: 16px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-body);
+}
+/* Children inside bottom sheet fill width */
+.mobile-sheet__panel > .sidebar,
+.mobile-sheet__panel > .props-panel {
+  flex: 1; overflow-y: auto; width: 100%; max-height: none; border: none;
+}
+
+/* ── Responsive: Tablet ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .brand-tagline { display: none; }
+  .app-header    { gap: 8px; padding: 0 8px; }
+}
+
+/* ── Responsive: Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .app-header       { height: 48px; min-height: 48px; gap: 6px; padding: 0 8px; }
+  .brand-name       { font-size: 14px; }
+  .brand-icon       { font-size: 15px; }
+  .panel-sidebar,
+  .panel-props      { display: none !important; }
+  .mobile-panel-btns { display: flex; }
+  .mobile-sheet     { display: block; }
+}
+
+/* ── Touch devices: bigger drag handles ─────────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  .resize-handle        { width: 16px; }
+  .resize-handle--right { right: -8px; }
+  .resize-handle--left  { left:  -8px; }
+  .resize-handle__inner { width: 4px; height: 48px; }
+}
