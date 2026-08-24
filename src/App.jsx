@@ -86,9 +86,17 @@ export default function App() {
 
   const updateItem   = useCallback((id, upd, opts = {}) =>
     setCanvasItems(prev => prev.map(i => i.id === id ? { ...i, ...upd } : i), opts), [setCanvasItems])
-  const deleteItem   = useCallback(id => {
+  const deleteItem = useCallback(id => {
     setCanvasItems(prev => prev.filter(i => i.id !== id))
-    setSelectedId(s => s === id ? null : s)
+
+    setSelectedId(s => {
+      if (s === id) {
+        setCropMode(false)
+        return null
+      }
+
+      return s
+    })
   }, [setCanvasItems])
   const duplicateItem = useCallback(id => {
     setCanvasItems(prev => {
@@ -120,7 +128,12 @@ export default function App() {
   }, [])
 
   const selectedItem = canvasItems.find(i => i.id === selectedId) ?? null
-
+  useEffect(() => {
+  // Crop hanya boleh aktif jika masih ada objek yang dipilih.
+    if (!selectedId && cropMode) {
+      setCropMode(false)
+    }
+  }, [selectedId, cropMode])
   // Drag-resize sidebar
   const dragSidebar = useCallback(e => {
     e.preventDefault()

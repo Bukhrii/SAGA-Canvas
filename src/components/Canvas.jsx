@@ -359,15 +359,26 @@ export default function Canvas({
   }, [zoom, stagePos, stageRef, setZoom])
 
   const handleMouseDown = useCallback(e => {
-    const isBg = e.target === e.target.getStage() || e.target.name() === 'bg'
+    const isBg =
+      e.target === e.target.getStage() ||
+      e.target.name() === 'bg'
+
     if (isBg) {
       setSelectedId(null)
+
+      // Jika klik area canvas, selalu keluar dari crop mode.
+      setCropMode(false)
+
       if (e.evt.button === 1 || e.evt.altKey) {
         setIsPanning(true)
-        panRef.current = { x: e.evt.clientX - stagePos.x, y: e.evt.clientY - stagePos.y }
+
+        panRef.current = {
+          x: e.evt.clientX - stagePos.x,
+          y: e.evt.clientY - stagePos.y,
+        }
       }
     }
-  }, [stagePos, setSelectedId])
+  }, [stagePos, setSelectedId, setCropMode])
 
   const handleMouseMove = useCallback(e => {
     if (isPanning && panRef.current)

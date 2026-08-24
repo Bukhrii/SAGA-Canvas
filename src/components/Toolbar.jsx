@@ -6,27 +6,27 @@ const ZOOM_MIN = 0.05
 const PX_PER_CM = 10
 
 const cmToPx = cm => Math.round(Number(cm) * PX_PER_CM)
-const pxToCm = px => Number(px) / PX_PER
+const pxToCm = px => Number(px) / PX_PER_CM
 
 const CANVAS_PRESETS = [
   {
     label: 'Kain Sasirangan Landscape',
-    w: 2000,
-    h: 1100,
+    w: 200,
+    h: 110,
     note: '200 × 110 cm — default',
   },
   {
     label: 'Kain Sasirangan Portrait',
-    w: 1100,
-    h: 2000,
+    w: 110,
+    h: 200,
     note: '110 × 200 cm',
   },
-  { label: 'Kain HD 4×', w: 4000, h: 2200, note: '400 × 220 cm' },
-  { label: 'Kotak 100 × 100 cm', w: 1000, h: 1000 },
-  { label: 'Full HD 192 × 108 cm', w: 1920, h: 1080 },
-  { label: 'HD 128 × 72 cm', w: 1280, h: 720 },
-  { label: 'A4 Portrait', w: 794, h: 1123 },
-  { label: 'Kotak 80 × 80 cm', w: 800, h: 800 },
+  { label: 'Kain HD 4×', w: 400, h: 220, note: '400 × 220 cm' },
+  { label: 'Kotak 100 × 100 cm', w: 100, h: 100 },
+  { label: 'Full HD 192 × 108 cm', w: 192, h: 108 },
+  { label: 'HD 128 × 72 cm', w: 128, h: 72 },
+  { label: 'A4 Portrait', w: 79.4, h: 112.3 },
+  { label: 'Kotak 80 × 80 cm', w: 80, h: 80 },
 ]
 
 // Dropdown rendered into body to escape overflow:hidden parents
