@@ -21,7 +21,18 @@ function loadSavedProject() {
     if (!raw) return null
 
     const data = JSON.parse(raw)
-
+    // Migrasi project lama yang sempat menyimpan
+// ukuran canvas dalam nilai cm langsung sebagai px.
+if (
+  data.version !== 2 &&
+  data.canvasSize?.width === 200 &&
+  data.canvasSize?.height === 110
+) {
+  data.canvasSize = {
+    width: 2000,
+    height: 1100,
+  }
+}
     if (!data || typeof data !== 'object') return null
 
     return {
@@ -60,35 +71,9 @@ function loadSavedProject() {
   }
 }
 
-const savedProject = loadSavedProject()
-
-const [grid, setGrid] = useState(
-  savedProject?.grid ?? {
-    enabled: true,
-    type: 'square',
-    size: 100,
-    opacity: 0.25,
-    color: '#000000',
-    snap: false,
-  }
-)
-
-const [canvasSize, setCanvasSize] = useState(
-  savedProject?.canvasSize ?? DEFAULT_CANVAS
-)
-
-const [zoom, setZoom] = useState(
-  savedProject?.zoom ?? 0.4
-)
-
-const [bgColor, setBgColor] = useState(
-  savedProject?.bgColor ?? '#ffffff'
-)
-
-const [bgTransparent, setBgTransparent] = useState(
-  savedProject?.bgTransparent ?? false
-)
 export default function App() {
+  const savedProject = loadSavedProject()
+
   const [motifs, setMotifs]             = useState([])
   const [selectedId, setSelectedId]     = useState(null)
   const [grid, setGrid] = useState({
@@ -141,7 +126,7 @@ export default function App() {
   // Keyboard shortcuts
   useEffect(() => {
   const project = {
-    version: 1,
+    version: 2,
     canvasItems,
     canvasSize,
     grid,
@@ -212,7 +197,11 @@ export default function App() {
     const i = prev.findIndex(x => x.id === id); if (i<=0) return prev
     const a=[...prev];[a[i],a[i-1]]=[a[i-1],a[i]]; return a
   }), [setCanvasItems])
-  const clearCanvas  = useCallback(() => { setCanvasItems([]); setSelectedId(null) }, [setCanvasItems])
+  const clearCanvas = useCallback(() => {
+    setCanvasItems([])
+    setSelectedId(null)
+    setCropMode(false)
+  }, [setCanvasItems])
 
   // For clean export: temporarily hide transformer by deselecting
   const exportSelectedRef = useRef(null)

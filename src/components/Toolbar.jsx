@@ -387,7 +387,7 @@ const applyCustom = () => {
       {/* Clear */}
       <button className="tb-btn tb-btn--danger"
         onClick={() => canvasItems.length>0 && window.confirm('Hapus semua objek di canvas?') && onClear()}>
-        ⊗ Bersihkan
+        ⊗ Reset Canvas
       </button>
     </div>
   )

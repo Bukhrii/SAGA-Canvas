@@ -29,7 +29,7 @@ function GridLayer({ grid, canvasSize }) {
 }
 
 // ── Motif image ───────────────────────────────────────────────────────────────
-function MotifImage({ item, isSelected, onSelect, onChange, cropMode }) {
+function MotifImage({ item, isSelected, onSelect, onChange, onDragEnd, cropMode }) {
   const [image] = useImage(item.src, 'anonymous')
   const imgRef = useRef()
   const trRef  = useRef()
@@ -121,12 +121,12 @@ function MotifImage({ item, isSelected, onSelect, onChange, cropMode }) {
         draggable={!cropMode}
         onClick={onSelect}
         onTap={onSelect}
-        onDragEnd={e =>
-          onChange({
-            x: e.target.x(),
-            y: e.target.y(),
-          })
-        }
+        onDragEnd={e => {
+          onDragEnd?.(
+            e.target.x(),
+            e.target.y()
+          )
+        }}
         onTransform={() => {
           imgRef.current?.getLayer()?.batchDraw()
         }}
@@ -476,8 +476,11 @@ export default function Canvas({
               key={item.id}
               item={item}
               isSelected={selectedId === item.id}
-              onSelect={() => { if (!cropMode) setSelectedId(item.id) }}
+              onSelect={() => {
+                if (!cropMode) setSelectedId(item.id)
+              }}
               onChange={upd => onUpdateItem(item.id, upd)}
+              onDragEnd={(x, y) => handleDragEnd(item.id, x, y)}
               cropMode={cropMode}
             />
           ))}
