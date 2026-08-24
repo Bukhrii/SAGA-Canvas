@@ -13,7 +13,81 @@ const SIDEBAR_MIN      = 0
 const SIDEBAR_MAX      = 400
 const PROPS_MIN        = 0
 const PROPS_MAX        = 420
+const STORAGE_KEY = 'saga-canvas-project-v1'
 
+function loadSavedProject() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+
+    const data = JSON.parse(raw)
+
+    if (!data || typeof data !== 'object') return null
+
+    return {
+      canvasItems: Array.isArray(data.canvasItems) ? data.canvasItems : [],
+      canvasSize:
+        data.canvasSize &&
+        Number.isFinite(data.canvasSize.width) &&
+        Number.isFinite(data.canvasSize.height)
+          ? data.canvasSize
+          : DEFAULT_CANVAS,
+      grid:
+        data.grid &&
+        Number.isFinite(data.grid.size)
+          ? data.grid
+          : {
+              enabled: true,
+              type: 'square',
+              size: 100,
+              opacity: 0.25,
+              color: '#000000',
+              snap: false,
+            },
+      bgColor:
+        typeof data.bgColor === 'string'
+          ? data.bgColor
+          : '#ffffff',
+      bgTransparent: Boolean(data.bgTransparent),
+      zoom:
+        Number.isFinite(data.zoom)
+          ? data.zoom
+          : 0.4,
+    }
+  } catch (err) {
+    console.error('Gagal memuat project:', err)
+    return null
+  }
+}
+
+const savedProject = loadSavedProject()
+
+const [grid, setGrid] = useState(
+  savedProject?.grid ?? {
+    enabled: true,
+    type: 'square',
+    size: 100,
+    opacity: 0.25,
+    color: '#000000',
+    snap: false,
+  }
+)
+
+const [canvasSize, setCanvasSize] = useState(
+  savedProject?.canvasSize ?? DEFAULT_CANVAS
+)
+
+const [zoom, setZoom] = useState(
+  savedProject?.zoom ?? 0.4
+)
+
+const [bgColor, setBgColor] = useState(
+  savedProject?.bgColor ?? '#ffffff'
+)
+
+const [bgTransparent, setBgTransparent] = useState(
+  savedProject?.bgTransparent ?? false
+)
 export default function App() {
   const [motifs, setMotifs]             = useState([])
   const [selectedId, setSelectedId]     = useState(null)
@@ -42,7 +116,14 @@ export default function App() {
 
   const stageRef = useRef(null)
 
-  const { state: canvasItems, setState: setCanvasItems, undo, redo, canUndo, canRedo } = useHistory([])
+  const {
+    state: canvasItems,
+    setState: setCanvasItems,
+    undo,
+    redo,
+    canUndo,
+    canRedo
+  } = useHistory(savedProject?.canvasItems ?? [])
 
   // Load built-in motifs
   useEffect(() => {
@@ -59,16 +140,33 @@ export default function App() {
 
   // Keyboard shortcuts
   useEffect(() => {
-    const handler = e => {
-      const tag = document.activeElement?.tagName
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return
-      const ctrl = e.ctrlKey || e.metaKey
-      if (ctrl && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo() }
-      if (ctrl && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo() }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [undo, redo])
+  const project = {
+    version: 1,
+    canvasItems,
+    canvasSize,
+    grid,
+    bgColor,
+    bgTransparent,
+    zoom,
+    savedAt: Date.now(),
+  }
+
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(project)
+    )
+  } catch (err) {
+    console.error('Gagal menyimpan project:', err)
+  }
+}, [
+  canvasItems,
+  canvasSize,
+  grid,
+  bgColor,
+  bgTransparent,
+  zoom,
+])
 
   // Item mutations
   const addMotif = useCallback(motif => {
