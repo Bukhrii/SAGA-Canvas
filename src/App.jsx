@@ -17,9 +17,13 @@ const PROPS_MAX        = 420
 export default function App() {
   const [motifs, setMotifs]             = useState([])
   const [selectedId, setSelectedId]     = useState(null)
-  const [grid, setGrid]                 = useState({
-    enabled: true, type: 'square', size: 80,
-    opacity: 0.25, color: '#c8953a', snap: false,
+  const [grid, setGrid] = useState({
+    enabled: true,
+    type: 'square',
+    size: 100,
+    opacity: 0.25,
+    color: '#000000',
+    snap: false,
   })
   const [canvasSize, setCanvasSize]     = useState(DEFAULT_CANVAS)
   const [zoom, setZoom]                 = useState(0.4)

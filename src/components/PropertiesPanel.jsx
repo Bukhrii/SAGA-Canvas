@@ -1,6 +1,9 @@
 import React, { useState, useCallback } from 'react'
 import './PropertiesPanel.css'
+const PX_PER_CM = 10
 
+const pxToCm = px => Number(px) / PX_PER_CM
+const cmToPx = cm => Number(cm) * PX_PER_CM
 function Section({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
@@ -155,13 +158,28 @@ export default function PropertiesPanel({
             </select>
           </FieldRow>
 
-          <FieldRow label={`Ukuran: ${grid.size}px`}
-            tooltip="Jarak antar garis grid dalam pixel. Perbesar untuk sasirangan yang lebih jarang, perkecil untuk pola rapat.">
-            <input type="range" min={10} max={500} step={5}
-              value={grid.size}
-              onChange={e => setGrid(g=>({...g,size:parseInt(e.target.value)}))}
-              className="pp-slider" />
-            <span className="pp-slider-val">{grid.size}</span>
+          <FieldRow
+            label={`Ukuran: ${pxToCm(grid.size)} cm`}
+            tooltip="Jarak antar garis grid dalam centimeter."
+          >
+            <input
+              type="range"
+              min={1}
+              max={50}
+              step={1}
+              value={pxToCm(grid.size)}
+              onChange={e =>
+                setGrid(g => ({
+                  ...g,
+                  size: cmToPx(parseFloat(e.target.value)),
+                }))
+              }
+              className="pp-slider"
+            />
+
+            <span className="pp-slider-val">
+              {pxToCm(grid.size)} cm
+            </span>
           </FieldRow>
 
           <FieldRow label="Opacity">

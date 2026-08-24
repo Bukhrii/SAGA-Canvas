@@ -35,21 +35,71 @@ function MotifImage({ item, isSelected, onSelect, onChange, cropMode }) {
   const trRef  = useRef()
 
   useEffect(() => {
-    if (isSelected && !cropMode && trRef.current && imgRef.current) {
-      trRef.current.nodes([imgRef.current])
-      trRef.current.getLayer()?.batchDraw()
+    const node = imgRef.current
+    const transformer = trRef.current
+
+    if (!node || !transformer) return
+
+    if (isSelected && !cropMode) {
+      transformer.nodes([node])
+
+      // Pastikan Transformer membaca ukuran terbaru
+      // dari React state.
+      transformer.forceUpdate()
+
+      // Render langsung tanpa menunggu event canvas berikutnya.
+      transformer.getLayer()?.batchDraw()
+    } else {
+      transformer.nodes([])
     }
-  }, [isSelected, cropMode, image])
+  }, [
+    isSelected,
+    cropMode,
+    image,
+    item.x,
+    item.y,
+    item.width,
+    item.height,
+    item.rotation,
+    item.flipX,
+    item.flipY,
+  ])
 
   const handleTransformEnd = () => {
     const n = imgRef.current
     if (!n) return
-    const sx = n.scaleX(), sy = n.scaleY()
-    n.scaleX(1); n.scaleY(1)
+
+    const scaleX = n.scaleX()
+    const scaleY = n.scaleY()
+
+    const newWidth = Math.max(
+      10,
+      Math.abs(n.width() * scaleX)
+    )
+
+    const newHeight = Math.max(
+      10,
+      Math.abs(n.height() * scaleY)
+    )
+
+    const newX = n.x()
+    const newY = n.y()
+    const newRotation = n.rotation()
+
+    // Reset transform node terlebih dahulu.
+    n.scaleX(1)
+    n.scaleY(1)
+
+    // Sinkronkan layer Konva segera.
+    n.getLayer()?.batchDraw()
+
+    // Kemudian update React state.
     onChange({
-      x: n.x(), y: n.y(), rotation: n.rotation(),
-      width:  Math.max(10, n.width()  * Math.abs(sx)),
-      height: Math.max(10, n.height() * Math.abs(sy)),
+      x: newX,
+      y: newY,
+      rotation: newRotation,
+      width: newWidth,
+      height: newHeight,
     })
   }
 
@@ -58,18 +108,28 @@ function MotifImage({ item, isSelected, onSelect, onChange, cropMode }) {
       <KImage
         ref={imgRef}
         image={image}
-        x={item.x} y={item.y}
-        width={item.width} height={item.height}
+        x={item.x}
+        y={item.y}
+        width={item.width}
+        height={item.height}
         rotation={item.rotation}
         opacity={item.opacity ?? 1}
         scaleX={item.flipX ? -1 : 1}
         scaleY={item.flipY ? -1 : 1}
-        offsetX={item.flipX ? item.width  : 0}
+        offsetX={item.flipX ? item.width : 0}
         offsetY={item.flipY ? item.height : 0}
         draggable={!cropMode}
         onClick={onSelect}
         onTap={onSelect}
-        onDragEnd={e => onChange({ x: e.target.x(), y: e.target.y() })}
+        onDragEnd={e =>
+          onChange({
+            x: e.target.x(),
+            y: e.target.y(),
+          })
+        }
+        onTransform={() => {
+          imgRef.current?.getLayer()?.batchDraw()
+        }}
         onTransformEnd={handleTransformEnd}
       />
       {isSelected && !cropMode && (

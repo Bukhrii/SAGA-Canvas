@@ -3,17 +3,30 @@ import ReactDOM from 'react-dom'
 import './Toolbar.css'
 
 const ZOOM_MIN = 0.05
-const ZOOM_MAX = 5
+const PX_PER_CM = 10
+
+const cmToPx = cm => Math.round(Number(cm) * PX_PER_CM)
+const pxToCm = px => Number(px) / PX_PER
 
 const CANVAS_PRESETS = [
-  { label: 'Kain Sasirangan Landscape', w: 2000, h: 1100, note: '2m × 1.1m — default' },
-  { label: 'Kain Sasirangan Portrait',  w: 1100, h: 2000, note: '1.1m × 2m' },
-  { label: 'Kain HD 4×',               w: 4000, h: 2200, note: 'Resolusi tinggi cetak' },
-  { label: 'Kotak 1000×1000',          w: 1000, h: 1000 },
-  { label: 'Full HD 1920×1080',        w: 1920, h: 1080 },
-  { label: 'HD 1280×720',              w: 1280, h: 720  },
-  { label: 'A4 Portrait 794×1123',     w: 794,  h: 1123 },
-  { label: 'Kotak 800×800',            w: 800,  h: 800  },
+  {
+    label: 'Kain Sasirangan Landscape',
+    w: 2000,
+    h: 1100,
+    note: '200 × 110 cm — default',
+  },
+  {
+    label: 'Kain Sasirangan Portrait',
+    w: 1100,
+    h: 2000,
+    note: '110 × 200 cm',
+  },
+  { label: 'Kain HD 4×', w: 4000, h: 2200, note: '400 × 220 cm' },
+  { label: 'Kotak 100 × 100 cm', w: 1000, h: 1000 },
+  { label: 'Full HD 192 × 108 cm', w: 1920, h: 1080 },
+  { label: 'HD 128 × 72 cm', w: 1280, h: 720 },
+  { label: 'A4 Portrait', w: 794, h: 1123 },
+  { label: 'Kotak 80 × 80 cm', w: 800, h: 800 },
 ]
 
 // Dropdown rendered into body to escape overflow:hidden parents
@@ -54,8 +67,8 @@ export default function Toolbar({
   const [exportFormat,  setExportFormat]  = useState('png')
   const [exportScale,   setExportScale]   = useState(1)
   const [exportQuality, setExportQuality] = useState(0.92)
-  const [customW, setCustomW]           = useState(String(canvasSize.width))
-  const [customH, setCustomH]           = useState(String(canvasSize.height))
+  const [customW, setCustomW] = useState(String(pxToCm(canvasSize.width)))
+  const [customH, setCustomH] = useState(String(pxToCm(canvasSize.height)))
   const [exporting, setExporting]       = useState(false)
   const [exportMsg, setExportMsg]       = useState('')
 
@@ -63,8 +76,8 @@ export default function Toolbar({
   const exportBtnRef = useRef(null)
 
   useEffect(() => {
-    setCustomW(String(canvasSize.width))
-    setCustomH(String(canvasSize.height))
+    setCustomW(String(pxToCm(canvasSize.width)))
+    setCustomH(String(pxToCm(canvasSize.height)))
   }, [canvasSize.width, canvasSize.height])
 
   useEffect(() => {
@@ -81,14 +94,26 @@ export default function Toolbar({
   const toggle = panel => setOpenPanel(p => (p === panel ? null : panel))
 
   // ── Canvas size ─────────────────────────────────────────────────────────
-  const applyPreset = (w, h) => { setCanvasSize({ width: w, height: h }); setOpenPanel(null) }
   const applyCustom = () => {
-    const w = parseInt(customW, 10)
-    const h = parseInt(customH, 10)
-    if (!w || !h || w < 100 || h < 100) { alert('Ukuran minimal 100×100 piksel'); return }
-    setCanvasSize({ width: Math.min(w, 8000), height: Math.min(h, 8000) })
-    setOpenPanel(null)
+  const wCm = parseFloat(customW)
+  const hCm = parseFloat(customH)
+
+  if (!Number.isFinite(wCm) || !Number.isFinite(hCm) || wCm <= 0 || hCm <= 0) {
+    alert('Masukkan ukuran canvas yang valid dalam centimeter.')
+    return
   }
+
+  // Batas internal 8000 px = 800 cm.
+  const w = Math.min(cmToPx(wCm), 8000)
+  const h = Math.min(cmToPx(hCm), 8000)
+
+  setCanvasSize({
+    width: w,
+    height: h,
+  })
+
+  setOpenPanel(null)
+}
 
   // ── Core render function: export at full quality ────────────────────────
   // Strategy:
@@ -227,7 +252,7 @@ export default function Toolbar({
         <button ref={canvasBtnRef}
           className={`tb-btn ${openPanel==='canvas' ? 'tb-btn--active' : ''}`}
           onClick={() => toggle('canvas')}>
-          ⊞ Kanvas <span className="tb-btn-dim">{canvasSize.width}×{canvasSize.height}</span>
+          ⊞ Kanva <span className="tb-btn-dim">{pxToCm(canvasSize.width)}×{pxToCm(canvasSize.height)} cm</span>
         </button>
         <FloatingDropdown anchorRef={canvasBtnRef} open={openPanel==='canvas'} align="left">
           <div className="tb-dropdown-section">
@@ -242,20 +267,48 @@ export default function Toolbar({
             ))}
           </div>
           <div className="tb-dropdown-section">
-            <div className="tb-label">Ukuran kustom (piksel)</div>
-            <div className="tb-row">
-              <span className="tb-input-label">L</span>
-              <input type="number" className="tb-number" value={customW} min={100} max={8000}
-                onChange={e => setCustomW(e.target.value)}
-                onKeyDown={e => e.key==='Enter' && applyCustom()} />
-              <span className="tb-x">×</span>
-              <span className="tb-input-label">T</span>
-              <input type="number" className="tb-number" value={customH} min={100} max={8000}
-                onChange={e => setCustomH(e.target.value)}
-                onKeyDown={e => e.key==='Enter' && applyCustom()} />
-            </div>
-            <button className="tb-apply-btn" style={{marginTop:8}} onClick={applyCustom}>✓ Terapkan Ukuran</button>
-          </div>
+  <div className="tb-label">Ukuran kustom (centimeter)</div>
+
+  <div className="tb-row">
+      <span className="tb-input-label">L</span>
+
+      <input
+        type="number"
+        className="tb-number"
+        value={customW}
+        min={1}
+        max={800}
+        step={0.1}
+        onChange={e => setCustomW(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && applyCustom()}
+      />
+
+      <span className="tb-x">×</span>
+
+      <span className="tb-input-label">T</span>
+
+      <input
+        type="number"
+        className="tb-number"
+        value={customH}
+        min={1}
+        max={800}
+        step={0.1}
+        onChange={e => setCustomH(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && applyCustom()}
+      />
+
+      <span className="tb-unit">cm</span>
+    </div>
+
+    <button
+      className="tb-apply-btn"
+      style={{ marginTop: 8 }}
+      onClick={applyCustom}
+    >
+      ✓ Terapkan Ukuran
+    </button>
+  </div>
           <div className="tb-dropdown-section">
             <div className="tb-label">Latar belakang</div>
             <label className="tb-row" style={{gap:8, cursor:'pointer'}}>
