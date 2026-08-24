@@ -66,40 +66,56 @@ function MotifImage({ item, isSelected, onSelect, onChange, onDragEnd, cropMode 
   ])
 
   const handleTransformEnd = () => {
-    const n = imgRef.current
-    if (!n) return
+    const node = imgRef.current
+    if (!node) return
 
-    const scaleX = n.scaleX()
-    const scaleY = n.scaleY()
+    const scaleX = node.scaleX()
+    const scaleY = node.scaleY()
 
-    const newWidth = Math.max(
+    const width = Math.max(
       10,
-      Math.abs(n.width() * scaleX)
+      Math.abs(node.width() * scaleX)
     )
 
-    const newHeight = Math.max(
+    const height = Math.max(
       10,
-      Math.abs(n.height() * scaleY)
+      Math.abs(node.height() * scaleY)
     )
 
-    const newX = n.x()
-    const newY = n.y()
-    const newRotation = n.rotation()
+    const x = node.x()
+    const y = node.y()
+    const rotation = node.rotation()
 
-    // Reset transform node terlebih dahulu.
-    n.scaleX(1)
-    n.scaleY(1)
+    // Normalisasi transform node.
+    node.scaleX(1)
+    node.scaleY(1)
 
-    // Sinkronkan layer Konva segera.
-    n.getLayer()?.batchDraw()
-
-    // Kemudian update React state.
+    // Update React state satu kali.
     onChange({
-      x: newX,
-      y: newY,
-      rotation: newRotation,
-      width: newWidth,
-      height: newHeight,
+      x,
+      y,
+      width,
+      height,
+      rotation,
+    })
+
+    // Paksa render layer dan transformer segera.
+    const layer = node.getLayer()
+    if (layer) {
+      layer.batchDraw()
+    }
+
+    requestAnimationFrame(() => {
+      const currentNode = imgRef.current
+      const transformer = trRef.current
+
+      if (!currentNode || !transformer) return
+
+      if (isSelected && !cropMode) {
+        transformer.nodes([currentNode])
+        transformer.forceUpdate()
+        transformer.getLayer()?.batchDraw()
+      }
     })
   }
 
@@ -108,16 +124,14 @@ function MotifImage({ item, isSelected, onSelect, onChange, onDragEnd, cropMode 
       <KImage
         ref={imgRef}
         image={image}
-        x={item.x}
-        y={item.y}
+        offsetX={item.width / 2}
+        offsetY={item.height / 2}
+        x={item.x + item.width / 2}
+        y={item.y + item.height / 2}
         width={item.width}
         height={item.height}
         rotation={item.rotation}
         opacity={item.opacity ?? 1}
-        scaleX={item.flipX ? -1 : 1}
-        scaleY={item.flipY ? -1 : 1}
-        offsetX={item.flipX ? item.width : 0}
-        offsetY={item.flipY ? item.height : 0}
         draggable={!cropMode}
         onClick={onSelect}
         onTap={onSelect}
@@ -128,7 +142,11 @@ function MotifImage({ item, isSelected, onSelect, onChange, onDragEnd, cropMode 
           )
         }}
         onTransform={() => {
-          imgRef.current?.getLayer()?.batchDraw()
+          const node = imgRef.current
+          if (!node) return
+
+          node.getLayer()?.batchDraw()
+          trRef.current?.getLayer()?.batchDraw()
         }}
         onTransformEnd={handleTransformEnd}
       />
@@ -470,7 +488,12 @@ export default function Canvas({
 
         <GridLayer grid={grid} canvasSize={canvasSize} />
 
-        <Layer>
+        <Layer
+          clipX={0}
+          clipY={0}
+          clipWidth={canvasSize.width}
+          clipHeight={canvasSize.height}
+        >
           {items.map(item => (
             <MotifImage
               key={item.id}

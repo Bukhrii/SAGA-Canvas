@@ -21,19 +21,21 @@ function loadSavedProject() {
     if (!raw) return null
 
     const data = JSON.parse(raw)
-    // Migrasi project lama yang sempat menyimpan
-// ukuran canvas dalam nilai cm langsung sebagai px.
-if (
-  data.version !== 2 &&
-  data.canvasSize?.width === 200 &&
-  data.canvasSize?.height === 110
-) {
-  data.canvasSize = {
-    width: 2000,
-    height: 1100,
-  }
-}
-    if (!data || typeof data !== 'object') return null
+
+    if (!data || typeof data !== 'object') {
+      return null
+    }
+
+    if (
+      data.version !== 2 &&
+      data.canvasSize?.width === 200 &&
+      data.canvasSize?.height === 110
+    ) {
+      data.canvasSize = {
+        width: 2000,
+        height: 1100,
+      }
+    }
 
     return {
       canvasItems: Array.isArray(data.canvasItems) ? data.canvasItems : [],
